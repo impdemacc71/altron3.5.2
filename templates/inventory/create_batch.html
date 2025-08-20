@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="bg-white p-6 rounded-lg shadow-lg max-w-lg mx-auto">
+    <h2 class="text-2xl font-bold mb-6 text-blue-800">Create New Batch</h2>
+    <form method="post" class="space-y-4">
+        {% csrf_token %}
+        <div>
+            <label for="id_sku" class="block text-sm font-medium text-gray-700">SKU</label>
+            {{ form.sku }}
+        </div>
+        <div>
+            <label for="id_batch_date" class="block text-sm font-medium text-gray-700">Batch Date</label>
+            {{ form.batch_date }}
+        </div>
+        <div>
+            <label for="id_quantity" class="block text-sm font-medium text-gray-700">Quantity</label>
+            {{ form.quantity }}
+        </div>
+        <div>
+            <label for="id_device_name" class="block text-sm font-medium text-gray-700">Device Name</label>
+            {{ form.device_name }}
+        </div>
+        <div>
+            <label for="id_battery" class="block text-sm font-medium text-gray-700">Battery</label>
+            {{ form.battery }}
+        </div>
+        <div>
+            <label for="id_capacity" class="block text-sm font-medium text-gray-700">Capacity</label>
+            {{ form.capacity }}
+        </div>
+        <button type="submit" class="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition">Create Batch</button>
+    </form>
+</div>
+{% endblock %}

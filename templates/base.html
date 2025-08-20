@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UPS Manufacturing</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 font-sans">
+    <nav class="bg-gradient-to-r from-blue-600 to-blue-800 text-white shadow-lg">
+        <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+            <a href="{% url 'create_batch' %}" class="text-2xl font-bold">UPS Manufacturing</a>
+            <div class="space-x-4">
+                <a href="{% url 'create_batch' %}" class="hover:text-blue-200 transition">Create Batch</a>
+                <a href="{% url 'batch_list' %}" class="hover:text-blue-200 transition">Batch List</a>
+            </div>
+        </div>
+    </nav>
+    <div class="container mx-auto px-4 py-8">
+        {% block content %}
+        {% endblock %}
+    </div>
+</body>
+</html>

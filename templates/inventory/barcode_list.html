@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="bg-white p-6 rounded-lg shadow-lg">
+    <h2 class="text-2xl font-bold mb-6 text-blue-800">Barcodes for Batch: {{ batch }}</h2>
+    <div class="mb-4">
+        <a href="{% url 'print_barcodes' batch.id %}" class="bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition">Print All Barcodes</a>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {% for barcode in barcodes %}
+        <div class="border rounded-lg p-4 shadow-sm">
+            <p class="text-lg font-semibold text-gray-800">{{ batch.device_name }}</p>
+            <p class="text-sm text-gray-600">Battery: {{ batch.battery }}</p>
+            <p class="text-sm text-gray-600">Capacity: {{ batch.capacity }}</p>
+            <img src="{{ barcode.barcode_image.url }}" alt="{{ barcode.sequence_number }}" class="w-full h-auto my-2">
+            <p class="text-center text-sm font-medium text-gray-700">{{ barcode.sequence_number }}</p>
+            <a href="{% url 'print_single_barcode' batch.id barcode.id %}" class="block text-center bg-blue-600 text-white py-1 px-2 mt-2 rounded hover:bg-blue-700 transition">Print Barcode</a>
+        </div>
+        {% empty %}
+        <p class="col-span-3 text-center text-gray-500">No barcodes found for this batch.</p>
+        {% endfor %}
+    </div>
+    <a href="{% url 'batch_list' %}" class="mt-6 inline-block bg-gray-600 text-white py-2 px-4 rounded-lg hover:bg-gray-700 transition">Back to Batch List</a>
+</div>
+{% endblock %}

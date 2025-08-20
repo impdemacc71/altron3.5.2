@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Print Barcodes</title>
+    <style>
+        body { margin: 0; padding: 0; font-family: Arial, sans-serif; }
+        .barcode-container {
+            width: 2in;
+            height: 1in;
+            margin: 0.1in;
+            text-align: center;
+            page-break-inside: avoid;
+        }
+        .barcode-container img { max-width: 100%; max-height: 0.5in; }
+        .barcode-container p {
+            margin: 0;
+            font-size: 10pt;
+            line-height: 1.2;
+        }
+        @media print {
+            .barcode-container { margin: 0.1in; }
+        }
+    </style>
+</head>
+<body onload="window.print()">
+    {% for barcode in barcodes %}
+    <div class="barcode-container">
+        <p>{{ batch.device_name }}</p>
+        <p>Battery: {{ batch.battery }}</p>
+        <p>Capacity: {{ batch.capacity }}</p>
+        <img src="{{ barcode.barcode_image.url }}" alt="{{ barcode.sequence_number }}">
+    </div>
+    {% endfor %}
+</body>
+</html>

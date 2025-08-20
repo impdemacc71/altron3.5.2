@@ -1,37 +1,212 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
     <title>Print Barcodes</title>
     <style>
-        body { margin: 0; padding: 0; font-family: Arial, sans-serif; }
-        .barcode-container {
-            width: 2in;
-            height: 1in;
-            margin: 0.1in;
-            text-align: center;
-            page-break-inside: avoid;
+        :root {
+            --font-size-uniform: 8pt;
+            --padding-container: 1.5mm;
+            --line-height-tight: 1.0;
+            --barcode-image-max-height: 28mm;
         }
-        .barcode-container img { max-width: 100%; max-height: 0.5in; }
-        .barcode-container p {
+
+        @page {
+            size: 100mm 35mm;
             margin: 0;
-            font-size: 10pt;
-            line-height: 1.2;
         }
-        @media print {
-            .barcode-container { margin: 0.1in; }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        .label-wrapper {
+            display: grid;
+            grid-template-columns: 100mm;
+            gap: 0;
+            padding: 0;
+        }
+
+        .barcode-container {
+            width: 100mm;
+            height: 35mm;
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            padding: 0;
+            page-break-inside: avoid;
+            break-after: always;
+            box-sizing: border-box;
+        }
+
+        .barcode-container:last-of-type {
+            break-after: auto;
+        }
+
+        /* Left Section */
+        .sticker-left-section {
+            width: 50mm;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: var(--padding-container);
+            box-sizing: border-box;
+        }
+
+        .sticker-left-section img {
+            max-height: var(--barcode-image-max-height);
+            width: 100%;
+            object-fit: contain;
+            margin-bottom: 1mm;
+        }
+
+        .barcode-sequence-number {
+            font-size: var(--font-size-uniform);
+            font-weight: bold;
+            text-align: center;
+            margin: 0;
+            line-height: var(--line-height-tight);
+        }
+
+        /* Right Section with Table */
+        .sticker-right-section {
+            width: 50mm;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: var(--padding-container);
+            box-sizing: border-box;
+        }
+
+        .specs-table {
+            width: 100%;
+            height: auto;
+            max-height: 29mm;
+            border-collapse: collapse;
+            font-size: var(--font-size-uniform);
+            line-height: var(--line-height-tight);
+            border: 0.5px solid #333;
+        }
+
+        .specs-table td {
+            border: 0.5px solid #333;
+            padding: 0.5mm;
+            text-align: center;
+            font-weight: bold;
+            vertical-align: middle;
+            height: 3.8mm;
+        }
+
+        /* Device name row - merged columns */
+        .device-name-cell {
+            background-color: #f0f0f0;
+            font-weight: bold;
+            text-align: center;
+            height: 4.2mm;
+        }
+
+        /* Parameter labels */
+        .param-label {
+            background-color: #f8f8f8;
+            font-weight: bold;
+            text-align: center;
+            width: 50%;
+            font-size: 7.5pt;
+        }
+
+        /* Parameter values */
+        .param-value {
+            font-weight: bold;
+            text-align: center;
+            width: 50%;
+            font-size: 7.5pt;
+        }
+
+        /* Sequence number row - merged columns */
+        .sequence-cell {
+            background-color: #e8e8e8;
+            font-weight: bold;
+            text-align: center;
+            height: 4.2mm;
+        }
+
+        /* Responsive text sizing for long device names */
+        .device-name-text {
+            font-size: 7.5pt;
+            word-break: break-word;
+        }
+
+        /* Compact sequence text */
+        .sequence-text {
+            font-size: 7.5pt;
         }
     </style>
 </head>
 <body onload="window.print()">
-    {% for barcode in barcodes %}
-    <div class="barcode-container">
-        <p>{{ batch.device_name }}</p>
-        <p>Battery: {{ batch.battery }}</p>
-        <p>Capacity: {{ batch.capacity }}</p>
-        <img src="{{ barcode.barcode_image.url }}" alt="{{ barcode.sequence_number }}">
+    <div class="label-wrapper">
+        {% for barcode in barcodes %}
+        <div class="barcode-container">
+
+            <!-- Left Section -->
+            <div class="sticker-left-section">
+                <img src="{% url 'barcode_image' barcode.sequence_number %}" alt="{{ barcode.sequence_number }}">
+                <p class="barcode-sequence-number">{{ barcode.sequence_number }}</p>
+            </div>
+
+            <!-- Right Section with Table -->
+            <div class="sticker-right-section">
+                <table class="specs-table">
+                    <!-- Row 1: Device Name (2 columns merged) -->
+                    <tr>
+                        <td colspan="2" class="device-name-cell">
+                            <span class="device-name-text">{{ barcode.batch.device_name }}</span>
+                        </td>
+                    </tr>
+                    
+                    <!-- Row 2: Battery -->
+                    <tr>
+                        <td class="param-label">BATTERY</td>
+                        <td class="param-value">{{ barcode.batch.battery }}</td>
+                    </tr>
+                    
+                    <!-- Row 3: Capacity -->
+                    <tr>
+                        <td class="param-label">CAPACITY</td>
+                        <td class="param-value">{{ barcode.batch.capacity }}</td>
+                    </tr>
+                    
+                    <!-- Row 4: MPPT Cap -->
+                    <tr>
+                        <td class="param-label">MPPT CAP</td>
+                        <td class="param-value">{{ barcode.batch.mppt_cap|default:"N/A" }}</td>
+                    </tr>
+                    
+                    <!-- Row 5: VOC Max -->
+                    <tr>
+                        <td class="param-label">VOC MAX</td>
+                        <td class="param-value">{{ barcode.batch.voc_max|default:"N/A" }}</td>
+                    </tr>
+                    
+                    <!-- Row 6: EF -->
+                    <tr>
+                        <td class="param-label">EF</td>
+                        <td class="param-value">{{ barcode.batch.ef|default:"N/A" }}</td>
+                    </tr>
+                    
+                    <!-- Row 7: Sequence Number (2 columns merged) -->
+                    <tr>
+                        <td colspan="2" class="sequence-cell">{{ barcode.sequence_number }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+        {% endfor %}
     </div>
-    {% endfor %}
 </body>
 </html>

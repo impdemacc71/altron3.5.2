@@ -25,7 +25,9 @@ SECRET_KEY = "django-insecure-!cn3nx5tvbq=#9hoq=uco+&j754-mtj1+6ga&awm+vpmn*pb1y
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+# your_project/settings.py
+
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost', '192.168.56.1'] # ADD YOUR IP HERE
 
 
 # Application definition
@@ -62,6 +64,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                'django.template.context_processors.debug',
             ],
         },
     },
@@ -106,6 +109,8 @@ USE_I18N = True
 USE_TZ = True
 
 
+
+AUTH_USER_MODEL = 'inventory.CustomUser'
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
@@ -116,5 +121,16 @@ STATIC_URL = "static/"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+import os
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+
+LOGIN_URL = 'login'
+LOGIN_REDIRECT_URL = 'dashboard'
+LOGOUT_REDIRECT_URL = 'login'
+
+SESSION_COOKIE_AGE = 900  # 15 minutes in seconds (15 * 60 = 900)
+SESSION_SAVE_EVERY_REQUEST = True
+PRODUCT_NAME = "CoreInspect" # <--- CHANGE THIS TO YOUR DESIRED PRODUCT NAME

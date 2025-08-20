@@ -3,22 +3,56 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>UPS Manufacturing</title>
+    <title>UPS Manufacturing</title> {# Reverted title to static text #}
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        /* Ensures html and body take full viewport height for sticky footer */
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+        /* Base font and flexbox for sticky footer layout */
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            display: flex;
+            flex-direction: column; /* Stacks header, main content, and footer vertically */
+            background-color: #f3f4f6; /* Light gray background */
+        }
+        /* Allows the main content area to grow and push the footer to the bottom */
+        main {
+            flex-grow: 1;
+        }
+        /* Removed .navbar-logo styling as logo is removed */
+    </style>
 </head>
 <body class="bg-gray-100 font-sans">
-    <nav class="bg-gradient-to-r from-blue-600 to-blue-800 text-white shadow-lg">
-        <div class="container mx-auto px-4 py-4 flex justify-between items-center">
-            <a href="{% url 'create_batch' %}" class="text-2xl font-bold">UPS Manufacturing</a>
-            <div class="space-x-4">
-                <a href="{% url 'create_batch' %}" class="hover:text-blue-200 transition">Create Batch</a>
-                <a href="{% url 'batch_list' %}" class="hover:text-blue-200 transition">Batch List</a>
+    <nav class="bg-gradient-to-r from-blue-700 to-blue-900 text-white shadow-xl py-4 sm:py-5">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center">
+            {# Reverted to static "UPS Manufacturing" text #}
+            <a href="{% url 'dashboard' %}" class="text-3xl font-extrabold tracking-tight hover:text-blue-200 transition duration-300 ease-in-out">UPS Manufacturing</a>
+            <div class="flex items-center space-x-6">
+                {% if user.is_authenticated %}
+                <span class="text-lg font-medium text-blue-100">Welcome, <span class="font-semibold">{{ user.username }}</span> (<span class="capitalize">{{ user.role }}</span>)</span>
+                <a href="{% url 'logout' %}" class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 transition duration-300 ease-in-out text-white font-medium shadow-md">Logout</a>
+                {% else %}
+                <a href="{% url 'login' %}" class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 transition duration-300 ease-in-out text-white font-medium shadow-md">Login</a>
+                {% endif %}
             </div>
         </div>
     </nav>
-    <div class="container mx-auto px-4 py-8">
+    <main class="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {% block content %}
         {% endblock %}
-    </div>
+    </main>
+
+    <footer class="bg-gray-800 text-white text-center py-6 mt-auto shadow-inner">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <p class="text-sm">&copy; {{ "now"|date:"Y" }} UPS Manufacturing. All rights reserved.</p> {# Reverted copyright to static text #}
+        </div>
+    </footer>
 </body>
 </html>

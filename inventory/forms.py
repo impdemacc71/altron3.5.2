@@ -75,7 +75,7 @@ class TestForm(forms.Form):
                 questions = TestQuestion.objects.filter(template=template_instance).order_by('id')
                 for question in questions:
                     self.fields[f'question_{question.id}_status'] = forms.ChoiceField(
-                        choices=[('pass', 'Pass'), ('fail', 'Fail')],
+                        choices=[('fail', 'Fail'), ('pass', 'Pass')],
                         label=question.question_text,
                         widget=forms.Select(attrs={
                             'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm py-2.5 px-3 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm'

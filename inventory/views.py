@@ -86,7 +86,9 @@ def batch_list(request):
     if to_date:
         batches = batches.filter(batch_date__lte=to_date)
 
-    batches = batches.order_by('-batch_date')
+    #batches = batches.order_by('-batch_date')
+    # Order by 'created_at' in descending order to get latest first
+    batches = batches.order_by('-created_at') # CHANGED THIS LINE
 
     context = {
         'batches': batches,

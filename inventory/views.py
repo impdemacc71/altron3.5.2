@@ -181,10 +181,12 @@ def new_test(request):
                 questions = TestQuestion.objects.filter(template=template_instance)
                 for question in questions:
                     status_field_name = f'question_{question.id}_status'
+                    output_field_name = f'question_{question.id}_output' # NEW FIELD NAME
                     remarks_field_name = f'question_{question.id}_remarks'
 
                     status = form.cleaned_data.get(status_field_name, 'fail')
                     is_passed = (status == 'pass')
+                    technical_output = form.cleaned_data.get(output_field_name, None) # NEW DATA EXTRACTION
                     remarks = form.cleaned_data.get(remarks_field_name, '')
 
                     logger.debug("Saving answer for question %s: status=%s, remarks=%s",
@@ -193,6 +195,8 @@ def new_test(request):
                         test=test,
                         question=question,
                         is_passed=is_passed,
+                        # NEW FIELD SAVING
+                        technical_output=technical_output,
                         remarks=remarks
                     )
                 return redirect('test_detail', test_id=test.id)

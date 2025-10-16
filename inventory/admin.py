@@ -52,3 +52,12 @@ admin.site.register(TestTemplate) # Register the new TestTemplate model
 admin.site.register(TestQuestion, TestQuestionAdmin)
 admin.site.register(Test, TestAdmin)
 admin.site.register(TestAnswer)
+
+
+from .models import TechnicalOutputChoice
+
+@admin.register(TechnicalOutputChoice)
+class TechnicalOutputChoiceAdmin(admin.ModelAdmin):
+    list_display = ('value', 'is_active', 'order')
+    list_editable = ('is_active', 'order')
+    search_fields = ('value',)

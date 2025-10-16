@@ -4,7 +4,7 @@ from django.db import models
 from django.utils import timezone
 from django.contrib.auth.models import AbstractUser
 # from .utils import generate_barcode # Assuming this is not strictly needed for form logic
-from .models import CustomUser, SKU, Batch, Barcode, Test, TestQuestion, TestAnswer, TestTemplate # Import TestTemplate
+from .models import CustomUser, SKU, Batch, Barcode, Test, TestQuestion, TestAnswer, TestTemplate,TechnicalOutputChoice # Import TestTemplate
 
 class BatchForm(forms.ModelForm):
     class Meta:
@@ -65,7 +65,20 @@ class TestForm(forms.Form):
             self.fields['barcode'].queryset = Barcode.objects.filter(batch_id=selected_batch_id)
         else:
             self.fields['barcode'].queryset = Barcode.objects.none()
-
+        
+        
+        # 💡 FINAL FIX: Use a comprehension to guarantee clean (value, label) tuples
+        dynamic_outputs_list = [
+            (choice.value, choice.value)
+            for choice in TechnicalOutputChoice.objects.filter(is_active=True).order_by('order', 'value')
+        ]
+        
+        TECHNICAL_OUTPUT_CHOICES = [
+            ('', '--- Select Output ---'),
+        ]
+        
+        # Extend the list with the dynamic choices.
+        TECHNICAL_OUTPUT_CHOICES.extend(dynamic_outputs_list)
         # Dynamically add TestQuestion fields if a Template is selected
         current_template_id = selected_template_id or (self.data.get('template') if 'template' in self.data else None)
 
@@ -77,6 +90,16 @@ class TestForm(forms.Form):
                     self.fields[f'question_{question.id}_status'] = forms.ChoiceField(
                         choices=[('fail', 'Fail'), ('pass', 'Pass')],
                         label=question.question_text,
+                        widget=forms.Select(attrs={
+                            'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm py-2.5 px-3 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm'
+                        })
+                    )
+                    
+                    # NEW TECHNICAL OUTPUT FIELD - NOW USES DYNAMIC CHOICES
+                    self.fields[f'question_{question.id}_output'] = forms.ChoiceField(
+                        choices=TECHNICAL_OUTPUT_CHOICES, # <-- UPDATED HERE
+                        required=False,
+                        label='',
                         widget=forms.Select(attrs={
                             'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm py-2.5 px-3 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm'
                         })

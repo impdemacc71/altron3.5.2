@@ -27,7 +27,7 @@ DEBUG = True
 
 # your_project/settings.py
 
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost', '192.168.56.1'] # ADD YOUR IP HERE
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost', '192.168.18.77'] # ADD YOUR IP HERE
 
 
 # Application definition

@@ -20,3 +20,11 @@ def capitalize(value):
     if isinstance(value, str):
         return value.capitalize()
     return value
+
+@register.filter(name='get_field')
+def get_field(form, field_name):
+    """
+    Allows template to access form.fields['field_name'] by name.
+    Usage: {{ form|get_field:field_name }}
+    """
+    return form[field_name]

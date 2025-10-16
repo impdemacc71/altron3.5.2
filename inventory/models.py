@@ -155,7 +155,19 @@ class TestAnswer(models.Model):
     test = models.ForeignKey(Test, on_delete=models.CASCADE, related_name='answers')
     question = models.ForeignKey(TestQuestion, on_delete=models.CASCADE)
     is_passed = models.BooleanField(default=False)
+    technical_output = models.CharField(max_length=50, blank=True, null=True)
     remarks = models.TextField(blank=True)
 
     def __str__(self):
         return f"{self.test} - {self.question} ({'Passed' if self.is_passed else 'Failed'})"
+    
+class TechnicalOutputChoice(models.Model):
+    value = models.CharField(max_length=50, unique=True, help_text="e.g., 200W, 1700W, 300A")
+    is_active = models.BooleanField(default=True)
+    order = models.IntegerField(default=0) # For custom sorting
+
+    class Meta:
+        ordering = ['order', 'value']
+
+    def __str__(self):
+        return self.value    

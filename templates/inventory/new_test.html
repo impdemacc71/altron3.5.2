@@ -1,18 +1,19 @@
 {% extends 'base.html' %}
-{% load inventory_tags %} {# Assuming inventory_tags is needed for custom filters/tags #}
+{% load inventory_tags %} 
+{# NOTE: We still load inventory_tags because the old remarks field might still rely on form|attr:remarks_name. However, we'll simplify the rendering below. #}
 
 {% block content %}
-<div class="bg-gray-50 min-h-screen py-8 px-4 sm:px-6 lg:px-8 font-sans"> {# Consistent background with base.html #}
-    <div class="max-w-4xl mx-auto bg-white p-6 sm:p-8 rounded-xl shadow-lg border border-gray-200"> {# Centered, rounded, shadowed container #}
+<div class="bg-gray-50 min-h-screen py-8 px-4 sm:px-6 lg:px-8 font-sans">
+    <div class="max-w-4xl mx-auto bg-white p-6 sm:p-8 rounded-xl shadow-lg border border-gray-200">
 
-        <div class="flex justify-between items-center mb-8"> {# Flex container for title and back button #}
-            <h2 class="text-3xl font-extrabold text-blue-800 tracking-tight">New Product Test</h2> {# Larger, bolder title #}
+        <div class="flex justify-between items-center mb-8">
+            <h2 class="text-3xl font-extrabold text-blue-800 tracking-tight">New Product Test</h2>
             <a href="{% url 'testing_module' %}" class="inline-flex items-center justify-center px-5 py-2 border border-transparent text-base font-medium rounded-lg shadow-sm text-white bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition duration-150 ease-in-out">
                 Back to Testing Module
             </a>
         </div>
 
-        <form method="post" id="test-form" class="space-y-8" data-new-test-url="{% url 'new_test' %}"> {# Increased vertical spacing #}
+        <form method="post" id="test-form" class="space-y-8" data-new-test-url="{% url 'new_test' %}">
             {% csrf_token %}
 
             {# Display non-field errors if any #}
@@ -23,7 +24,7 @@
                 </div>
             {% endif %}
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6"> {# Increased gap #}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                     <label for="id_sku" class="block text-sm font-medium text-gray-700 mb-1">SKU</label>
                     {{ form.sku }}
@@ -63,26 +64,27 @@
                 </div>
             </div>
 
-            <h3 class="text-2xl font-semibold mt-8 text-blue-800 tracking-tight">Test Questions</h3> {# Larger, bolder heading #}
-            <div class="overflow-x-auto shadow-md rounded-lg border border-gray-200"> {# Table container with shadow and rounded corners #}
+            <h3 class="text-2xl font-semibold mt-8 text-blue-800 tracking-tight">Test Questions</h3>
+            <div class="overflow-x-auto shadow-md rounded-lg border border-gray-200">
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-100">
                         <tr>
-                            {# Adjusted width to give more space to Question #}
-                            <th class="py-3.5 px-4 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider rounded-tl-lg w-2/5">Question</th>
-                            <th class="py-3.5 px-4 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider w-1/5">Status</th>
-                            {# Adjusted width to give more space to Remarks #}
-                            <th class="py-3.5 px-4 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider rounded-tr-lg w-2/5">Remarks</th>
+                            <th class="py-3.5 px-4 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider rounded-tl-lg w-2/6">Question</th>
+                            <th class="py-3.5 px-4 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider w-1/12">Status</th>
+                            {# NEW HEADER COLUMN #}
+                            <th class="py-3.5 px-4 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider w-1/6">Technical Output</th>
+                            <th class="py-3.5 px-4 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider rounded-tr-lg w-1/4">Remarks</th>
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
                         {% for field in form %}
+                            {# Loop only for status fields, as they are the first field created for each question #}
                             {% if field.name|slice:"0:9" == "question_" and field.name|slice:"-7:" == "_status" %}
                             <tr class="border-b hover:bg-gray-50 transition duration-100 ease-in-out">
-                                {# Ensure question text wraps and has sufficient height - REMOVED SLICE FILTER #}
                                 <td class="py-3 px-4 align-top text-sm text-gray-900 font-medium whitespace-normal break-words">{{ field.label }}</td>
+                                
+                                {# STATUS COLUMN - Renders correctly with {{ field }} #}
                                 <td class="py-3 px-4 align-top">
-                                    {# Apply Tailwind classes to the select field #}
                                     <div class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
                                         {{ field }}
                                     </div>
@@ -90,14 +92,30 @@
                                         <p class="mt-1 text-sm text-red-600">{{ field.errors.as_text }}</p>
                                     {% endif %}
                                 </td>
+                                
+                                {# 💡 FIX: NEW TECHNICAL OUTPUT COLUMN - Using form indexing #}
+                                <td class="py-3 px-4 align-top">
+                                    {% with output_name=field.name|slice:"0:-7"|add:"_output" %}
+                                        <div class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                                            {{ form|get_field:output_name }}
+                                        </div>
+                                        {% if form|get_field:output_name and form|get_field:output_name.errors %}
+                                            <p class="mt-1 text-sm text-red-600">{{ form|get_field:output_name.errors.as_text }}</p>
+                                        {% endif %}
+                                    {% endwith %}
+                                </td>
+                                
+                                {# 💡 FIX: REMARKS COLUMN - Using form indexing #}
                                 <td class="py-3 px-4 align-top">
                                     {% with remarks_name=field.name|slice:"0:-7"|add:"_remarks" %}
-                                        {# Ensure textarea has enough rows and wraps text #}
-                                        <textarea name="{{ remarks_name }}" id="id_{{ remarks_name }}" rows="4" {# Increased default rows #}
-                                                  class="mt-1 block w-full rounded-md border-gray-300 shadow-sm py-2.5 px-3 text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500 sm:text-sm resize-y" {# Added resize-y #}
-                                                  placeholder="Add remarks here...">{{ form|attr:remarks_name|default:"" }}</textarea>
-                                        {% if form|attr:remarks_name and form|attr:remarks_name.errors %}
-                                            <p class="mt-1 text-sm text-red-600">{{ form|attr:remarks_name.errors.as_text }}</p>
+                                        {# Use form[field_name] to get the field object, then render its widget #}
+                                        <div class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                                            {{ form|get_field:remarks_name }}
+                                        </div>
+
+                                        {% comment %} Check for errors on the remarks field object {% endcomment %}
+                                        {% if form|get_field:remarks_name and form|get_field:remarks_name.errors %}
+                                            <p class="mt-1 text-sm text-red-600">{{ form|get_field:remarks_name.errors.as_text }}</p>
                                         {% endif %}
                                     {% endwith %}
                                 </td>
@@ -198,7 +216,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     template: getElement('id_template')?.value || '',
                     overallStatus: getElement('id_overall_status')?.value || '',
                     barcode: getElement('id_barcode')?.value || '',
-                    remarks: [...testForm.querySelectorAll('textarea[name$="_remarks"]')].reduce((acc, field) => {
+                    // 💡 FIX: This line now saves ALL dynamic fields (status, output, and remarks)
+                    qFields: [...testForm.querySelectorAll('select[name^="question_"], textarea[name^="question_"]')].reduce((acc, field) => {
                         acc[field.name] = field.value;
                         return acc;
                     }, {})
@@ -220,8 +239,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 getElement('id_template').value = currentValues.template;
                 getElement('id_overall_status').value = currentValues.overallStatus;
                 
-                Object.entries(currentValues.remarks).forEach(([name, value]) => {
-                    const field = testForm.querySelector(`textarea[name="${name}"]`);
+                // 💡 FIX: Restore ALL dynamic fields
+                Object.entries(currentValues.qFields).forEach(([name, value]) => {
+                    const field = testForm.querySelector(`[name="${name}"]`);
                     if (field) field.value = value;
                 });
                 

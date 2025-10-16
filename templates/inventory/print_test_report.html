@@ -96,19 +96,21 @@
             <strong>Remarks:</strong> {{ test.remarks|default:"-" }}
         </div>
 
-        <div class="section-title">Question Details</div>
+       <div class="section-title">Question Details</div>
         <table>
             <thead>
                 <tr>
-                    <th>Question</th>
-                    <th>Status</th>
-                    <th>Remarks</th>
+                    <th style="width: 40%;">Question</th>
+                    <th style="width: 15%;">Status</th>
+                    {# NEW COLUMN HEADER #}
+                    <th style="width: 15%;">Technical Output</th>
+                    <th style="width: 30%;">Remarks</th>
                 </tr>
             </thead>
             <tbody>
                 {% for answer in test_answers %}
                 <tr>
-                    <td>{{ answer.question.question_text }}</td>
+                    <td style="text-align: left;">{{ answer.question.question_text }}</td>
                     <td>
                         <span class="overall-status-span
                             {% if answer.is_passed %}overall-status-passed
@@ -116,11 +118,15 @@
                             {{ answer.is_passed|yesno:"Passed,Failed" }}
                         </span>
                     </td>
-                    <td>{{ answer.remarks|default:"-" }}</td>
+                    
+                    {# NEW TECHNICAL OUTPUT CELL #}
+                    <td>{{ answer.technical_output|default:"-" }}</td>
+                    
+                    <td style="text-align: left;">{{ answer.remarks|default:"-" }}</td>
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="3">No answers available.</td> {# Corrected colspan to 3 #}
+                    <td colspan="4">No answers available.</td> {# Corrected colspan to 4 #}
                 </tr>
                 {% endfor %}
             </tbody>

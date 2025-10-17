@@ -92,6 +92,8 @@
             font-size: var(--font-size-uniform);
             line-height: var(--line-height-tight);
             border: 0.5px solid #333;
+            /* CRITICAL FIX: Force fixed layout for PDF generation */
+            table-layout: fixed; 
         }
 
         .specs-table td {
@@ -111,20 +113,21 @@
             height: 4.2mm;
         }
 
-        /* Parameter labels */
+        /* Parameter labels - CRITICAL FIX: Ensure width is set and left-aligned */
         .param-label {
             background-color: #f8f8f8;
             font-weight: bold;
-            text-align: center;
-            width: 50%;
-            font-size: 10pt;
+            text-align: left; 
+            /* Width is defined by <col> tag */
+            font-size: 8pt; 
+            padding-left: 1mm;
         }
 
         /* Parameter values */
         .param-value {
             font-weight: bold;
             text-align: center;
-            width: 50%;
+            /* Width is defined by <col> tag */
             font-size: 10pt;
         }
 
@@ -149,59 +152,67 @@
     </style>
 </head>
 <body onload="window.print()">
+    {% load inventory_tags %}
     <div class="label-wrapper">
         {% for barcode in barcodes %}
         <div class="barcode-container">
 
-            <!-- Left Section -->
             <div class="sticker-left-section">
                 <img src="{% url 'barcode_image' barcode.sequence_number %}" alt="{{ barcode.sequence_number }}">
                 <p class="barcode-sequence-number">{{ barcode.sequence_number }}</p>
             </div>
 
-            <!-- Right Section with Table -->
             <div class="sticker-right-section">
+                
                 <table class="specs-table">
-                    <!-- Row 1: Device Name (2 columns merged) -->
-                    <tr>
-                        <td colspan="2" class="device-name-cell">
-                            <span class="device-name-text">{{ barcode.batch.device_name }}</span>
-                        </td>
-                    </tr>
                     
-                    <!-- Row 2: Battery -->
-                    <tr>
-                        <td class="param-label">BATTERY</td>
-                        <td class="param-value">{{ barcode.batch.battery }}</td>
-                    </tr>
+                    {# CRITICAL FIX: Define Column Groups explicitly to force two columns #}
+                    <colgroup>
+                        <col style="width: 50%;">
+                        <col style="width: 50%;">
+                    </colgroup>
                     
-                    <!-- Row 3: Capacity -->
+                    {# 1. RENDER DEVICE NAME AS THE HEADER (Always renders first if it's required) #}
+                    {% with device_name_value=barcode.batch|attr:"device_name" %}
+                        <tr>
+                            <td colspan="2" class="device-name-cell">
+                                <span class="device-name-text">
+                                    {% if "device_name" in barcode.batch.spec_template.fields_json %}
+                                        {# Device Name is SINE KELVIN 40 #}
+                                        {{ device_name_value|default:barcode.batch.sku.code }}
+                                    {% else %}
+                                        {{ barcode.batch.sku.code }} - Specs
+                                    {% endif %}
+                                </span>
+                            </td>
+                        </tr>
+                    {% endwith %}
+
+                    {# 2. DYNAMICALLY GENERATE ROWS for ALL FIELDS (including Battery, System Cap, etc.) #}
+                    {% with template_fields=barcode.batch.spec_template.fields_json %}
+                        
+                        {% for field_name in template_fields %}
+                            
+                            {# Skip device_name as it was already handled as the header #}
+                            {% if field_name != "device_name" %}
+                                {% with field_value=barcode.batch|attr:field_name %}
+                                    {# Render every row required by the template #}
+                                    <tr>
+                                        {# This cell is 50% width and prints the LABEL #}
+                                        <td class="param-label">{{ spec_field_map|dict_get:field_name }}</td>
+                                        
+                                        {# This cell is 50% width and prints the VALUE #}
+                                        <td class="param-value">{{ field_value|default:"-" }}</td>
+                                    </tr>
+                                {% endwith %}
+                            {% endif %}
+                        {% endfor %}
+
+                    {% endwith %}
+
+                    {# 3. Sequence Number (Always last) #}
                     <tr>
-                        <td class="param-label">CAPACITY</td>
-                        <td class="param-value">{{ barcode.batch.capacity }}</td>
-                    </tr>
-                    
-                    <!-- Row 4: MPPT Cap -->
-                    <tr>
-                        <td class="param-label">MPPT CAP</td>
-                        <td class="param-value">{{ barcode.batch.mppt_cap|default:"N/A" }}</td>
-                    </tr>
-                    
-                    <!-- Row 5: VOC Max -->
-                    <tr>
-                        <td class="param-label">VOC MAX</td>
-                        <td class="param-value">{{ barcode.batch.voc_max|default:"N/A" }}</td>
-                    </tr>
-                    
-                    <!-- Row 6: EF -->
-                    <tr>
-                        <td class="param-label">EF</td>
-                        <td class="param-value">{{ barcode.batch.ef|default:"N/A" }}</td>
-                    </tr>
-                    
-                    <!-- Row 7: Sequence Number (2 columns merged) -->
-                    <tr>
-                        <td colspan="2" class="sequence-cell">{{ barcode.sequence_number }}</td>
+                        <td colspan="2" class="sequence-cell sequence-text">{{ barcode.sequence_number }}</td>
                     </tr>
                 </table>
             </div>

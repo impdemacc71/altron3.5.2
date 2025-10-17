@@ -28,3 +28,17 @@ def get_field(form, field_name):
     Usage: {{ form|get_field:field_name }}
     """
     return form[field_name]
+
+@register.filter
+def split(value, arg):
+    """
+    Splits a string by the given argument.
+    Example: 'a,b,c'|split:',' becomes ['a', 'b', 'c']
+    """
+    return value.split(arg)
+
+@register.filter
+def dict_get(d, key):
+    """Retrieves a value from a dictionary using a key."""
+    # We use d.get(key) which is a safe dictionary lookup
+    return d.get(key, '')

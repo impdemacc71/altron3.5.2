@@ -50,19 +50,42 @@ def increment_suffix(suffix: str) -> str:
     new_letters = "".join(letters_list)
     return f"{new_letters}001"
 
+class BatchSpecTemplate(models.Model):
+    name = models.CharField(max_length=100, unique=True) # e.g., SOLAR PCU, MPPT, LI-UPS
+    # Stores a list of required field names: ["battery", "capacity", "mppt_cap"]
+    # Corresponds to field names on the Batch model
+    fields_json = models.JSONField(default=list) 
+    
+    def __str__(self):
+        return self.name
+
 class Batch(models.Model):
     sku = models.ForeignKey(SKU, on_delete=models.CASCADE)
     prefix = models.CharField(max_length=20)  # keep this field, auto-set to sku.code
     batch_date = models.DateField(default=timezone.now)
     quantity = models.PositiveIntegerField()
-    device_name = models.CharField(max_length=100, blank=True)
-    battery = models.CharField(max_length=100, blank=True)
+    device_name = models.CharField(max_length=100, blank=True, null=True) # <-- ADDED null=True    battery = models.CharField(max_length=100, blank=True)
     capacity = models.CharField(max_length=50, blank=True)
     mppt_cap = models.CharField(max_length=50, blank=True, null=True)
     voc_max = models.CharField(max_length=50, blank=True, null=True)
     feature_spec = models.CharField(max_length=50, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     ef = models.CharField(max_length=50, null=True, blank=True)
+    battery = models.CharField(max_length=100, blank=True, null=True)
+    # NEW FIELDS BASED ON PDF TEMPLATES:
+    input_range = models.CharField(max_length=50, blank=True, null=True)        # Used in LI-UPS [cite: 12]
+    output_range = models.CharField(max_length=50, blank=True, null=True)       # Used in LI-UPS [cite: 12]
+    current_max = models.CharField(max_length=50, blank=True, null=True)        # Used in BATTERY CHARGER [cite: 8]
+    
+    system_cap = models.CharField(max_length=50, blank=True, null=True)         # SYSTEM Cap [cite: 4, 9, 12]
+    spv_max = models.CharField(max_length=50, blank=True, null=True)            # SPV Max [cite: 4]
+    dc_load = models.CharField(max_length=50, blank=True, null=True)            # DC LOAD [cite: 2]
+    kel_po = models.CharField(max_length=50, blank=True, null=True)             # KEL-PO [cite: 13]
+
+    # Dynamic Template Link
+    spec_template = models.ForeignKey(BatchSpecTemplate, on_delete=models.SET_NULL, null=True, blank=True)
+    
+    created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"{self.prefix} - {self.batch_date}"

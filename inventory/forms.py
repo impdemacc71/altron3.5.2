@@ -3,26 +3,124 @@ from django import forms
 from django.db import models
 from django.utils import timezone
 from django.contrib.auth.models import AbstractUser
-# from .utils import generate_barcode # Assuming this is not strictly needed for form logic
-from .models import CustomUser, SKU, Batch, Barcode, Test, TestQuestion, TestAnswer, TestTemplate,TechnicalOutputChoice # Import TestTemplate
+from .models import CustomUser, SKU, Batch, Barcode, Test, TestQuestion, TestAnswer, TestTemplate, TechnicalOutputChoice, BatchSpecTemplate 
 
-class BatchForm(forms.ModelForm):
+# Define all possible spec field mappings (Internal Name: Human Readable Label)
+SPEC_FIELD_MAP = {
+    # ... (map remains the same)
+    'device_name': 'Device Name',
+    'battery': 'Battery',
+    'capacity': 'BATTERY Cap',         
+    'mppt_cap': 'MPPT Cap',
+    'voc_max': 'Voc Max',             
+    'feature_spec': 'Feature / Spec',
+    'ef': 'EF',
+    
+    # New Fields Mapped:
+    'system_cap': 'SYSTEM Cap',       
+    'spv_max': 'SPV Max',             
+    'dc_load': 'DC LOAD',             
+    'kel_po': 'KEL-PO',               
+    'current_max': 'CURRENT Max',     
+    'input_range': 'INPUT Range',     
+    'output_range': 'OUTPUT Range',   
+}
+
+class BatchCreateForm(forms.ModelForm):
+    # Field to select the template (must be a visible ModelChoiceField)
+    spec_template = forms.ModelChoiceField(
+        queryset=BatchSpecTemplate.objects.all(),
+        required=True,
+        label="Select Specification Template",
+        empty_label="--- Select Template ---",
+        widget=forms.Select(attrs={'class': 'w-full p-2 border rounded-md', 'id': 'id_spec_template'})
+    )
+    
+    # Prefix field is required for the save logic but not listed in Meta.fields
+    # We must define it here to access it in __init__ and save()
+    prefix = forms.CharField(max_length=20, required=False) 
+
+
     class Meta:
         model = Batch
-        fields = '__all__'
+        # These are the CORE fields always needed for batch/barcode creation.
+        # Note: Prefix is defined above, not here.
+        fields = ['sku', 'batch_date', 'quantity', 'spec_template'] 
         widgets = {
-            'sku': forms.Select(attrs={'class': 'w-full p-2 border rounded-lg'}),
-            'batch_date': forms.DateInput(attrs={'type': 'date', 'class': 'w-full p-2 border rounded-lg'}),
-            'quantity': forms.NumberInput(attrs={'class': 'w-full p-2 border rounded-lg'}),
-            'device_name': forms.TextInput(attrs={'class': 'w-full p-2 border rounded-lg'}),
-            'battery': forms.TextInput(attrs={'class': 'w-full p-2 border rounded-lg'}),
-            'capacity': forms.TextInput(attrs={'class': 'w-full p-2 border rounded-lg'}),
-            'mppt_cap': forms.TextInput(attrs={'class': 'w-full p-2 border rounded-lg'}),
-            'voc_max': forms.TextInput(attrs={'class': 'w-full p-2 border rounded-lg'}),
-            'feature_spec': forms.TextInput(attrs={'class': 'w-full p-2 border rounded-lg'}),
-            'ef': forms.TextInput(attrs={'class': 'w-full p-2 border rounded-lg'}),
+            'sku': forms.Select(attrs={'class': 'w-full p-2 border rounded-md'}),
+            'batch_date': forms.DateInput(attrs={'type': 'date', 'class': 'w-full p-2 border rounded-md'}),
+            'quantity': forms.NumberInput(attrs={'class': 'w-full p-2 border rounded-md'}),
         }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        
+        # 1. Ensure prefix is correctly initialized from instance if editing
+        if self.instance.pk:
+            self.fields['prefix'].initial = self.instance.prefix
+        
+        # 2. Determine the template ID
+        template_id = None
+        if self.is_bound and self.data.get('spec_template'):
+            template_id = self.data['spec_template']
+        elif self.instance.pk and self.instance.spec_template:
+            template_id = self.instance.spec_template.pk
+        
+        required_fields = []
+        if template_id:
+            try:
+                template = BatchSpecTemplate.objects.get(pk=template_id)
+                required_fields = template.fields_json 
+            except BatchSpecTemplate.DoesNotExist:
+                pass
+        
+        # 3. Add dynamic spec fields
+        for field_name in SPEC_FIELD_MAP.keys():
+            if field_name in self.fields:
+                del self.fields[field_name]
+
+        if required_fields:
+            for field_name in required_fields:
+                label = SPEC_FIELD_MAP.get(field_name, field_name.replace('_', ' ').title())
+                
+                initial_value = self.instance.__dict__.get(field_name) if self.instance else None
+                is_required = field_name not in ['feature_spec', 'ef']
+                
+                self.fields[field_name] = forms.CharField(
+                    label=label,
+                    required=is_required,
+                    initial=initial_value,
+                    widget=forms.TextInput(attrs={'class': 'w-full p-2 border rounded-md'})
+                )
+
+    # 💡 CRITICAL FIX: Override save to manually transfer validated dynamic data
+    def save(self, commit=True):
+        # 1. Call ModelForm save method but prevent saving to DB immediately
+        instance = super().save(commit=False) 
+
+        # 2. Loop through dynamic fields and assign validated data
+        if instance.spec_template:
+            required_fields = instance.spec_template.fields_json
+            
+            for field_name in required_fields:
+                # We only need to check fields that were actually rendered and validated
+                if field_name in self.cleaned_data:
+                    # Assign the validated data from the form to the model instance attribute
+                    setattr(instance, field_name, self.cleaned_data[field_name])
+                # Ensure the prefix is also set, as it's not in Meta.fields
+                elif field_name == 'prefix':
+                    setattr(instance, 'prefix', self.cleaned_data['prefix'])
+
+        # 3. Handle the prefix field explicitly if not handled in the loop (recommended practice)
+        if 'prefix' in self.cleaned_data:
+             instance.prefix = self.cleaned_data['prefix']
+             
+        # 4. Save the instance with all dynamic data
+        if commit:
+            instance.save() 
+        return instance
+
+# TestForm remains unchanged from the previous working version
 class TestForm(forms.Form):
     sku = forms.ModelChoiceField(
         queryset=SKU.objects.all(),
@@ -67,7 +165,7 @@ class TestForm(forms.Form):
             self.fields['barcode'].queryset = Barcode.objects.none()
         
         
-        # 💡 FINAL FIX: Use a comprehension to guarantee clean (value, label) tuples
+        # FINAL FIX: Use a comprehension to guarantee clean (value, label) tuples
         dynamic_outputs_list = [
             (choice.value, choice.value)
             for choice in TechnicalOutputChoice.objects.filter(is_active=True).order_by('order', 'value')
@@ -97,7 +195,7 @@ class TestForm(forms.Form):
                     
                     # NEW TECHNICAL OUTPUT FIELD - NOW USES DYNAMIC CHOICES
                     self.fields[f'question_{question.id}_output'] = forms.ChoiceField(
-                        choices=TECHNICAL_OUTPUT_CHOICES, # <-- UPDATED HERE
+                        choices=TECHNICAL_OUTPUT_CHOICES, 
                         required=False,
                         label='',
                         widget=forms.Select(attrs={

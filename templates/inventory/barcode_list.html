@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load inventory_tags %}
 {% block content %}
 <div class="bg-gray-50 min-h-screen py-8 px-4 sm:px-6 lg:px-8 font-sans"> {# Added background color, min-height, and increased padding #}
     <div class="max-w-7xl mx-auto bg-white p-6 sm:p-8 rounded-xl shadow-lg border border-gray-200"> {# Centered content, rounded corners, subtle border #}
@@ -23,22 +24,39 @@
             </div>
         </div>
 
-        {# Batch Details Summary - Displayed once at the top (retained for context, but can be removed if truly not needed) #}
+        {# Batch Details Summary - Now Dynamically Displays Template Specs #}
         <div class="mb-8 p-6 bg-blue-50 rounded-lg shadow-inner border border-blue-200 text-blue-800">
-            <h3 class="text-xl font-semibold mb-3">Batch Details:</h3>
+            <h3 class="text-xl font-semibold mb-3">Batch Details (Template: {{ batch.spec_template.name|default:"None" }}):</h3>
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-y-2 gap-x-6 text-base">
-                <p><strong>Device Name:</strong> {{ batch.device_name }}</p>
-                <p><strong>Battery:</strong> {{ batch.battery }}</p>
-                <p><strong>Capacity:</strong> {{ batch.capacity }}</p>
-                {% if batch.mppt_cap %}
-                    <p><strong>MPPT Cap:</strong> {{ batch.mppt_cap }}</p>
+                
+                {# Always show fixed fields #}
+                <p><strong>SKU:</strong> {{ batch.sku.code }}</p>
+                <p><strong>Prefix:</strong> {{ batch.prefix }}</p>
+                <p><strong>Batch Date:</strong> {{ batch.batch_date }}</p>
+
+                {% if batch.spec_template.fields_json %}
+                    {# Loop through fields required by the selected template #}
+                    {% for field_name in batch.spec_template.fields_json %}
+                        {# Use the custom template tag 'attr' (or get_field) to access the field value on the model instance #}
+                        {% with field_value=batch|attr:field_name %}
+                            {% if field_value %}
+                                <p>
+                                    {# Look up the human-readable label using the spec_field_map passed from the view #}
+                                    <strong>{{ spec_field_map|attr:field_name }}:</strong> {{ field_value }}
+                                </p>
+                            {% endif %}
+                        {% endwith %}
+                    {% endfor %}
                 {% endif %}
-                {% if batch.voc_max %}
-                    <p><strong>Voc Max:</strong> {{ batch.voc_max }}</p>
-                {% endif %}
-                {% if batch.feature_spec %}
+
+                {# Add Feature/Spec and EF if they are not explicitly in the template but were filled #}
+                {% if batch.feature_spec and 'feature_spec' not in batch.spec_template.fields_json %}
                     <p><strong>Feature/Spec:</strong> {{ batch.feature_spec }}</p>
                 {% endif %}
+                {% if batch.ef and 'ef' not in batch.spec_template.fields_json %}
+                    <p><strong>EF:</strong> {{ batch.ef }}</p>
+                {% endif %}
+
             </div>
         </div>
 

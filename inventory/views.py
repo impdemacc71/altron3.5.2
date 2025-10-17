@@ -6,13 +6,31 @@ from django.contrib.auth.decorators import login_required
 from django.db.models import Count, Q
 from django.conf import settings # Import settings for MEDIA_URL
 from django.views.decorators.cache import never_cache # Import never_cache decorator
-from .forms import BatchForm, TestForm, TestOverallStatusForm
+from .forms import  BatchCreateForm, TestForm, TestOverallStatusForm
 from .models import Batch, Barcode, SKU, Test, TestQuestion, TestAnswer, CustomUser, TestTemplate
 import logging
 from django.core.paginator import Paginator
 from django.template.loader import get_template
 from django.http import HttpResponse
 from django.template.loader import render_to_string
+
+
+SPEC_FIELD_MAP = {
+    'device_name': 'Device Name',
+    'battery': 'Battery',
+    'capacity': 'BATTERY Cap',         
+    'mppt_cap': 'MPPT Cap',
+    'voc_max': 'Voc Max',             
+    'feature_spec': 'Feature / Spec',
+    'ef': 'EF',
+    'system_cap': 'SYSTEM Cap',       
+    'spv_max': 'SPV Max',             
+    'dc_load': 'DC LOAD',             
+    'kel_po': 'KEL-PO',               
+    'current_max': 'CURRENT Max',     
+    'input_range': 'INPUT Range',     
+    'output_range': 'OUTPUT Range',   
+}
 
 # Import HTML from weasyprint
 try:
@@ -57,16 +75,35 @@ def barcode_module(request):
     return render(request, 'inventory/barcode_module.html')
 
 @login_required
-@never_cache # Added never_cache decorator
+@never_cache 
 def create_batch(request):
+    is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+
     if request.method == 'POST':
-        form = BatchForm(request.POST)
+        form = BatchCreateForm(request.POST)
+
         if form.is_valid():
-            form.save()
-            return redirect('batch_list')
+            if is_ajax:
+                # AJAX successful validation—this branch is usually just hit for form rendering, 
+                # but we'll include it for completeness if the view must return HTML.
+                pass # Proceed to save and redirect below
+            else:
+                form.save()
+                return redirect('batch_list')
+        
+        # If form is invalid or we are handling an AJAX update request:
+        if is_ajax:
+            # Render ONLY the dynamic fields section for the AJAX response
+            return render(request, 'inventory/create_batch_dynamic_fields.html', {'form': form})
+        else:
+            # Regular POST failure: render the full page with errors
+            return render(request, 'inventory/create_batch.html', {'form': form})
     else:
-        form = BatchForm()
+        # Initial GET request
+        form = BatchCreateForm()
+    
     return render(request, 'inventory/create_batch.html', {'form': form})
+
 
 @login_required
 @never_cache # Added never_cache decorator
@@ -112,11 +149,30 @@ def barcode_list(request, batch_id):
     paginator = Paginator(barcode_queryset, 10)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
+    
+    SPEC_FIELD_MAP = {
+    'device_name': 'Device Name',
+    'battery': 'Battery',
+    'capacity': 'BATTERY Cap',         
+    'mppt_cap': 'MPPT Cap',
+    'voc_max': 'Voc Max',             
+    'feature_spec': 'Feature / Spec',
+    'ef': 'EF',
+    'system_cap': 'SYSTEM Cap',       
+    'spv_max': 'SPV Max',             
+    'dc_load': 'DC LOAD',             
+    'kel_po': 'KEL-PO',               
+    'current_max': 'CURRENT Max',     
+    'input_range': 'INPUT Range',     
+    'output_range': 'OUTPUT Range',   
+}
 
     context = {
         'batch': batch,
         'page_obj': page_obj,
         'barcode_number': barcode_number,
+        # 💡 NEW: Pass the SPEC_FIELD_MAP
+        'spec_field_map': SPEC_FIELD_MAP,
     }
     return render(request, 'inventory/barcode_list.html', context)
 
@@ -130,7 +186,15 @@ def print_barcodes(request, batch_id, barcode_id=None):
         barcodes = [get_object_or_404(Barcode, id=barcode_id, batch=batch)]
     else:
         barcodes = Barcode.objects.filter(batch=batch)
-    return render(request, 'inventory/print_barcodes.html', {'batch': batch, 'barcodes': barcodes})
+        
+    context = {
+        'batch': batch, 
+        'barcodes': barcodes,
+        # 💡 NEW: Pass the SPEC_FIELD_MAP
+        'spec_field_map': SPEC_FIELD_MAP,
+    }
+    return render(request, 'inventory/print_barcodes.html', context)    
+    #return render(request, 'inventory/print_barcodes.html', {'batch': batch, 'barcodes': barcodes})
 
 @login_required
 @never_cache # Added never_cache decorator

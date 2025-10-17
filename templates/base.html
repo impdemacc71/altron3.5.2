@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>UPS Manufacturing</title> {# Reverted title to static text #}
+    <title>Soluqis QMS</title> {# Reverted title to static text #}
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
@@ -33,7 +33,7 @@
     <nav class="bg-gradient-to-r from-blue-700 to-blue-900 text-white shadow-xl py-4 sm:py-5">
         <div class="container mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center">
             {# Reverted to static "UPS Manufacturing" text #}
-            <a href="{% url 'dashboard' %}" class="text-3xl font-extrabold tracking-tight hover:text-blue-200 transition duration-300 ease-in-out">UPS Manufacturing</a>
+            <a href="{% url 'dashboard' %}" class="text-3xl font-extrabold tracking-tight hover:text-blue-200 transition duration-300 ease-in-out">Soluqis QMS</a>
             <div class="flex items-center space-x-6">
                 {% if user.is_authenticated %}
                 <span class="text-lg font-medium text-blue-100">Welcome, <span class="font-semibold">{{ user.username }}</span> (<span class="capitalize">{{ user.role }}</span>)</span>
@@ -51,7 +51,7 @@
 
     <footer class="bg-gray-800 text-white text-center py-6 mt-auto shadow-inner">
         <div class="container mx-auto px-4 sm:px-6 lg:px-8">
-            <p class="text-sm">&copy; {{ "now"|date:"Y" }} UPS Manufacturing. All rights reserved.</p> {# Reverted copyright to static text #}
+            <p class="text-sm">&copy; {{ "now"|date:"Y" }} Soluqis. All rights reserved.</p> {# Reverted copyright to static text #}
         </div>
     </footer>
 </body>

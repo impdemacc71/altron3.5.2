@@ -300,6 +300,8 @@ def test_results(request):
         tests = tests.filter(barcode__sequence_number__icontains=barcode)
     if template_used:
         tests = tests.filter(template_used__id=template_used)
+        
+    tests = tests.order_by('-test_date')    
 
     counts = tests.aggregate(
         total=Count('id'),
@@ -414,7 +416,7 @@ def print_barcodes_pdf(request, batch_id):
 
 
 import io
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.views.decorators.cache import never_cache
 import barcode
 from barcode.writer import ImageWriter
@@ -442,4 +444,11 @@ def barcode_image_view(request, sequence_number):
 
     code128(sequence_number, writer=writer).write(buffer, options)
     return HttpResponse(buffer.getvalue(), content_type='image/png')
+
+@login_required
+def session_keep_alive(request):
+    """
+    A view that the client-side can ping to keep the session alive.
+    """
+    return JsonResponse({'status': 'ok'})
 

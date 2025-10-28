@@ -18,4 +18,5 @@ urlpatterns = [
     path('barcode-img/<str:sequence_number>/', views.barcode_image_view, name='barcode_image'),
     path('test/<int:test_id>/', views.test_detail, name='test_detail'),
     path('test/<int:test_id>/print/', views.print_test_report, name='print_test_report'), # <--- THIS IS THE CRUCIAL LINE
+    path('keep-alive/', views.session_keep_alive, name='session_keep_alive'),
 ]
